@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# 本机配置与运行产物（含本地路径、日志、截图，不应入库）
+config.json
+*.log
+.cache/
+shots/
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# 上传用的本地凭据，绝不入库
+token.txt
+.token

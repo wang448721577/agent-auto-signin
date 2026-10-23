@@ -1,0 +1,6 @@
+# 接口类脚本只用标准库；客户端类需要下列第三方包
+pywinauto>=0.6.8      # Windows UI Automation 点击
+psutil>=5.9           # 进程管理（启动/关闭客户端）
+pillow>=9.0           # 截图与颜色定位（豆包签到按钮）
+pywin32>=305          # 剪贴板粘贴中文、窗口置前
+cryptography>=41      # 百度搭子 AES-256-GCM 解密 Cookie
