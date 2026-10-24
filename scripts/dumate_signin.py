@@ -28,7 +28,11 @@ import urllib.error
 import urllib.request
 
 API_BASE = "https://console.bce.baidu.com"
-DATA_DIR = os.path.join("Library", "Application Support", "qianfan-desktop-app")
+if os.name == "nt":
+    # Windows：凭据在 %APPDATA%\qianfan-desktop-app
+    DATA_DIR = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")), "qianfan-desktop-app")
+else:
+    DATA_DIR = os.path.join("Library", "Application Support", "qianfan-desktop-app")
 REQUEST_TIMEOUT = 20
 CSRF_COOKIE = "bce-user-info"
 COOKIE_HOST = "console.bce.baidu.com"
@@ -113,6 +117,12 @@ def request(path, cookie_str, csrf, method="GET", body=None):
         return -1, {"error": str(e)}
 
 
+def _num(v):
+    """只把真正的数字当数值用。bool 是 int 的子类，必须显式排除，
+    否则接口返回 true 时会被格式化成「成功领取 True 积分」。"""
+    return v if isinstance(v, int) and not isinstance(v, bool) else None
+
+
 def checkin(claim=False):
     auth_file, key_file, err = find_auth()
     if err:
@@ -139,7 +149,7 @@ def checkin(claim=False):
 
     result = sbody.get("result") or {}
     days = result.get("signInDays") or []
-    total = result.get("totalPoints")
+    total = _num(result.get("totalPoints"))
     tail = "（累计 %s 积分，已签 %s 天）" % (total, len(days)) if total is not None else ""
     if result.get("hasIssued"):
         return 0, {"result": "ALREADY", "report": "今日已签过%s" % tail,
@@ -153,15 +163,15 @@ def checkin(claim=False):
     if ccode in (401, 403):
         return 1, {"result": "NO_SESSION", "report": "登录态已失效（HTTP %s），请重新登录百度搭子桌面端" % ccode}
     if ccode == 200 and cbody.get("success"):
-        got = cbody.get("result")
-        show = "成功领取 %s 积分" % got if isinstance(got, int) else "签到成功"
+        got = _num(cbody.get("result"))
+        show = ("成功领取 %d 积分" % got) if got is not None else "签到成功"
         return 0, {"result": "CLAIMED", "report": show + tail, "total_points": total}
     # 已签过的业务幂等：重查一次状态按 ALREADY 处理
     scode2, sbody2 = request("api/dumate/points/loginBonusInfo", cookie_str, csrf)
     if 200 == scode2 and sbody2.get("success") and (sbody2.get("result") or {}).get("hasIssued"):
         result2 = sbody2["result"]
-        return 0, {"result": "ALREADY", "report": "今日已签过（累计 %s 积分）" % result2.get("totalPoints"),
-                   "total_points": result2.get("totalPoints")}
+        return 0, {"result": "ALREADY", "report": "今日已签过（累计 %s 积分）" % _num(result2.get("totalPoints")),
+                   "total_points": _num(result2.get("totalPoints"))}
     return 1, {"result": "ERROR", "report": "领取失败：%s（HTTP %s）" % (
         cbody.get("message") or json.dumps(cbody, ensure_ascii=False)[:120], ccode)}
 

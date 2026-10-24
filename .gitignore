@@ -19,3 +19,13 @@ Thumbs.db
 # 上传用的本地凭据，绝不入库
 token.txt
 .token
+
+# 本地专用：本目录同时是运行目录，以下文件/目录不对外发布
+.workbuddy/
+_backup_*/
+upload_via_api.py
+push_to_github.py
+一键上传到GitHub.bat
+wait_wb.py
+daily_all.bat
+run_daily.bat
